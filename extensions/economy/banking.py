@@ -3,7 +3,9 @@ from datetime import datetime, timezone
 import hikari
 import lightbulb
 
-from database import members, transanctions
+from database import members, transactions
+
+loader = lightbulb.Loader()
 
 # Utility Functions
 
@@ -104,5 +106,4 @@ def create_transanction_record(
     }
 
     # Insert the transaction record into the database
-    transanctions.insert_one(transanction_record)
-
+    transactions.insert_one(transanction_record)

@@ -9,4 +9,4 @@ main.load_dotenv()
 mongoClient = MongoClient(os.getenv("DB_URI"), server_api=ServerApi('1'))
 dbMembers = mongoClient["memberData"]
 members = dbMembers["members"]
-transanctions = dbMembers["transactions"]
+transactions = dbMembers["transactions"]

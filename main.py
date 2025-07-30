@@ -9,6 +9,8 @@ from hikari import Intents
 
 from database import members
 
+import extensions
+
 main.load_dotenv()
 
 INTENTS = Intents.GUILD_MEMBERS | Intents.GUILDS | Intents.DM_MESSAGES | Intents.GUILD_MESSAGES | Intents.MESSAGE_CONTENT | Intents.GUILD_MESSAGE_REACTIONS
@@ -24,6 +26,9 @@ client.di.registry_for(lightbulb.di.Contexts.DEFAULT).register_factory(lightbulb
 @bot.listen(hikari.StartingEvent)
 async def on_startup(_: hikari.StartingEvent) -> None:
     print("Bot is starting...")
+    print("Loading extensions...")
+    await client.load_extensions_from_package(extensions, recursive=True)
+    print("Extensions loaded successfully.")
     await client.start()
 
 @bot.listen(hikari.StartedEvent)
