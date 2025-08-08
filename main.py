@@ -6,10 +6,10 @@ from dotenv import main
 import hikari
 import lightbulb
 from hikari import Intents
-
 from database import members
 
 import extensions
+from hooks import fail_if_not_admin_or_owner
 
 main.load_dotenv()
 
@@ -20,8 +20,10 @@ client = lightbulb.client_from_app(bot)
 
 bot.subscribe(hikari.StartingEvent, client.start)
 
-client.di.registry_for(lightbulb.di.Contexts.DEFAULT).register_factory(hikari.GatewayBot, lambda: bot)
-client.di.registry_for(lightbulb.di.Contexts.DEFAULT).register_factory(lightbulb.GatewayEnabledClient, lambda: client)
+registry = client.di.registry_for(lightbulb.di.Contexts.DEFAULT)
+
+registry.register_factory(hikari.GatewayBot, lambda: bot)
+registry.register_factory(lightbulb.GatewayEnabledClient, lambda: client)
 
 @bot.listen(hikari.StartingEvent)
 async def on_startup(_: hikari.StartingEvent) -> None:
@@ -50,7 +52,8 @@ class Ping(
 class Announcement(
     lightbulb.SlashCommand,
     name = "announcement",
-    description = "Send an announcement to a specific channel."
+    description = "Send an announcement to a specific channel.",
+    hooks = [fail_if_not_admin_or_owner]
 ):
 
     message = lightbulb.string("message", "Announcement message")

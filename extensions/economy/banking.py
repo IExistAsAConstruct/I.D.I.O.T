@@ -4,6 +4,7 @@ import hikari
 import lightbulb
 
 from database import members, transactions
+from hooks import fail_if_not_admin_or_owner
 
 loader = lightbulb.Loader()
 
@@ -104,6 +105,5 @@ def create_transanction_record(
         "fees_charged": 0.0,  # Fees can be added later if applicable
         "status": "completed"  # Status of the transaction
     }
-
     # Insert the transaction record into the database
     transactions.insert_one(transanction_record)
