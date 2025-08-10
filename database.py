@@ -1,12 +1,24 @@
 import os
 from dotenv import main
 
-from pymongo.mongo_client import MongoClient
-from pymongo.server_api import ServerApi
+from pymongo import MongoClient
 
 main.load_dotenv()
 
-mongoClient = MongoClient(os.getenv("DB_URI"), server_api=ServerApi('1'))
+DB_URI = os.getenv("DB_URI")
+
+if not DB_URI:
+    raise ValueError("DB_URI environment variable is not set.")
+
+mongoClient = MongoClient(DB_URI)
+
+try:
+    mongoClient.admin.command("ping")  # Check if the connection is successful
+    print("MongoDB connection successful.")
+except Exception as e:
+    print(f"Failed to connect to MongoDB: {e}")
+    raise
+
 dbMembers = mongoClient["memberData"]
 members = dbMembers["members"]
 transactions = dbMembers["transactions"]

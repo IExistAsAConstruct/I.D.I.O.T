@@ -7,6 +7,8 @@ from database import members, transactions
 from hooks import fail_if_not_admin_or_owner
 
 loader = lightbulb.Loader()
+banking = lightbulb.Group("bank", "Banking related commands")
+loan = banking.subgroup("loan", "Loan related commands",)
 
 # Utility Functions
 
@@ -107,3 +109,62 @@ def create_transanction_record(
     }
     # Insert the transaction record into the database
     transactions.insert_one(transanction_record)
+
+@banking.register()
+class BankTest(
+    lightbulb.SlashCommand,
+    name = "test_bank",
+    description = "Test the banking system.",
+):
+    @lightbulb.invoke
+    async def invoke(self, ctx: lightbulb.Context) -> None:
+        """
+        Test the banking system by checking the user's balance and other details.
+        """
+        user_id = ctx.user.id
+        user_data = members.find_one({"id": user_id})
+
+        if not user_data:
+            await ctx.respond("You do not have an account in the banking system.")
+            return
+
+        balance = user_data.get("cash", 0)
+        bank_balance = user_data.get("bank", 0)
+        total_debt = user_data.get("total_debt", 0)
+
+        response = (
+            f"**Banking System Test**\n"
+            f"**User ID:** {user_id}\n"
+            f"**Cash Balance:** {balance}\n"
+            f"**Bank Balance:** {bank_balance}\n"
+            f"**Total Debt:** {total_debt}\n"
+        )
+
+        await ctx.respond(response)
+
+@loan.register()
+class LoanRequest(
+    lightbulb.SlashCommand,
+    name = "request",
+    description = "Request a loan from the bank.",
+):
+
+    principal = lightbulb.number("principal", "The amount of the loan you want to request.")
+    
+
+    @lightbulb.invoke
+    async def invoke(self, ctx: lightbulb.Context) -> None:
+        """
+        Request a loan from the bank.
+        """
+        user_id = ctx.user.id
+        amount = self.principal
+
+        if not can_take_loan(user_id, amount):
+            await ctx.respond("You cannot take this loan due to existing debts or limits.")
+            return
+
+        # Calculate APR and weekly payment
+        apr = calculate_weekly_apr(amount, 0, 1)
+
+loader.command(banking)

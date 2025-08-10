@@ -81,6 +81,40 @@ class Announcement(
         except Exception as e:
             await ctx.respond(f"Failed to send announcement: {str(e)}", ephemeral= True)
 
+@bot.listen(hikari.MessageCreateEvent)
+async def on_message_create(event: hikari.MessageCreateEvent) -> None:
+    member = event.author
+    if not member:
+        return
+
+    # Check if the member already exists in the database
+    existing_member = members.find_one({"id": member.id})
+    if existing_member:
+        return
+
+    # Create a new member document
+    new_member = {
+        "id": member.id,
+        "username": member.username,
+        "display_name": member.display_name,
+        "cash": 1000,  # Default starting cash (cash name customizable)
+        "bank": 0,  # Default starting bank balance
+        "debts": [], # List of debts
+        "total_debt": 0, # Total debt amount
+        "credit_score": 500, # Credit score
+        "wins": 0, # Wins in gambling
+        "losses": 0, # Losses in gambling
+        "trophies": [], # List of trophies
+        "emote_count": 0, # Count of certain emotes used
+        "emote_rank": "Rankless",
+        "joined_at": datetime.now(timezone.utc),
+        "created_at": member.created_at
+    }
+
+    # Insert the new member into the database
+    members.insert_one(new_member)
+    print(f"New member added: {member.username} (ID: {member.id})")
+
 @bot.listen(hikari.MemberCreateEvent)
 async def on_member_create(event: hikari.MemberCreateEvent) -> None:
     member = event.member
