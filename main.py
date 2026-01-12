@@ -88,13 +88,13 @@ async def on_message_create(event: hikari.MessageCreateEvent) -> None:
         return
 
     # Check if the member already exists in the database
-    existing_member = members.find_one({"id": member.id})
+    existing_member = members.find_one({"id": str(member.id)})
     if existing_member:
         return
 
     # Create a new member document
     new_member = {
-        "id": member.id,
+        "id": str(member.id),
         "username": member.username,
         "display_name": member.display_name,
         "cash": 1000,  # Default starting cash (cash name customizable)
@@ -105,8 +105,8 @@ async def on_message_create(event: hikari.MessageCreateEvent) -> None:
         "wins": 0, # Wins in gambling
         "losses": 0, # Losses in gambling
         "trophies": [], # List of trophies
-        "emote_count": 0, # Count of certain emotes used
-        "emote_rank": "Rankless",
+        "emote_count": [], # Count of certain emotes used
+        "emote_rank": [],
         "joined_at": datetime.now(timezone.utc),
         "created_at": member.created_at
     }
@@ -128,7 +128,7 @@ async def on_member_create(event: hikari.MemberCreateEvent) -> None:
 
     # Create a new member document
     new_member = {
-        "id": member.id,
+        "id": str(member.id),
         "username": member.username,
         "display_name": member.display_name,
         "cash": 1000,  # Default starting cash (cash name customizable)
@@ -139,8 +139,8 @@ async def on_member_create(event: hikari.MemberCreateEvent) -> None:
         "wins": 0, # Wins in gambling
         "losses": 0, # Losses in gambling
         "trophies": [], # List of trophies
-        "emote_count": 0, # Count of certain emotes used
-        "emote_rank": "Rankless",
+        "emote_count": [], # Count of certain emotes used
+        "emote_rank": [],
         "joined_at": datetime.now(timezone.utc),
         "created_at": member.created_at
     }

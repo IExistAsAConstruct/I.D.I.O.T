@@ -56,7 +56,7 @@ def calculate_weekly_payment(net_received: float, apr: float, num_weeks: int) ->
     weekly_payment = net_received * (weekly_apr * (1 + weekly_apr) ** num_weeks) / ((1 + weekly_apr) ** num_weeks - 1)
     return weekly_payment
 
-def can_take_loan(user_id: int, amount: float) -> bool:
+def can_take_loan(user_id: str, amount: float) -> bool:
     """
     Check if a user can take a loan based on their current debts and total debt.
 
@@ -79,8 +79,8 @@ def can_take_loan(user_id: int, amount: float) -> bool:
 # Payments and Transanctions
 
 def create_transanction_record(
-    user_id_from: int,
-    user_id_to: int,
+    user_id_from: str,
+    user_id_to: str,
     amount: float,
     description: str,
     transaction_type: str = "payment"
@@ -121,7 +121,8 @@ class BankTest(
         """
         Test the banking system by checking the user's balance and other details.
         """
-        user_id = ctx.user.id
+        user_id = str(ctx.user.id)
+        print(f"Testing bank for user ID: {user_id}")
         user_data = members.find_one({"id": user_id})
 
         if not user_data:
@@ -157,7 +158,7 @@ class LoanRequest(
         """
         Request a loan from the bank.
         """
-        user_id = ctx.user.id
+        user_id = str(ctx.user.id)
         amount = self.principal
 
         if not can_take_loan(user_id, amount):
@@ -166,5 +167,20 @@ class LoanRequest(
 
         # Calculate APR and weekly payment
         apr = calculate_weekly_apr(amount, 0, 1)
+        weekly_payment = calculate_weekly_payment(amount, apr, 4)
+        # Here you would add the loan to the user's account in the database
+        create_transanction_record(
+            user_id_from=str(1399230814679601172),  # Bank's user ID
+            user_id_to=user_id,
+            amount=amount,
+            description="Loan disbursement",
+            transaction_type="loan"
+        )
+        await ctx.respond(
+            f"Loan of {amount} approved!\n"
+            f"APR: {apr:.2f}%\n"
+            f"Weekly Payment: {weekly_payment:.2f} over 4 weeks."
+        )
+
 
 loader.command(banking)

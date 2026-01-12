@@ -22,3 +22,6 @@ except Exception as e:
 dbMembers = mongoClient["memberData"]
 members = dbMembers["members"]
 transactions = dbMembers["transactions"]
+
+dbGuilds = mongoClient["guildData"]
+guilds = dbGuilds["guilds"]
