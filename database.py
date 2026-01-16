@@ -25,3 +25,9 @@ transactions = dbMembers["transactions"]
 
 dbGuilds = mongoClient["guildData"]
 guilds = dbGuilds["guilds"]
+
+dbBotContent = mongoClient["botContent"]
+bot_messages = dbBotContent["bot_messages"]
+
+dbGambling = mongoClient["gamblingData"]
+gambling_history = dbGambling["gambling_history"]

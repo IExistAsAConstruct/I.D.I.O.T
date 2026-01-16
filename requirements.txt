@@ -1,0 +1,6 @@
+hikari~=2.5.0
+DateTime~=5.5
+python-dotenv~=1.1.1
+aiohttp~=3.12.14
+pillow~=12.1.0
+pymongo~=4.13.2

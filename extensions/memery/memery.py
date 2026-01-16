@@ -1,13 +1,20 @@
+#region Imports
 import hikari
 import lightbulb
 
 import io
 import aiohttp
+from database import bot_messages
 from PIL import Image, ImageDraw, ImageFont, ImageSequence
+from datetime import datetime, timezone
+#endregion
 
+#region Loader and Group
 loader = lightbulb.Loader()
 meme = lightbulb.Group("meme", "Joke commands")
+#endregion
 
+#region Text Functions
 def wrap_text(text: str, font: ImageFont.FreeTypeFont, max_width: int) -> list[str]:
     """
     Wrap text to fit within a max width.
@@ -169,22 +176,6 @@ def add_text_to_frame(
 
     return frame
 
-async def download_image(url: str) -> bytes:
-    """
-    Download an image from a URL.
-
-    Args:
-        url (str): The URL of the image.
-
-    Returns:
-        bytes: The image data.
-    """
-    async with aiohttp.ClientSession() as session:
-        async with session.get(url) as response:
-            if response.status != 200:
-                raise ValueError(f"Failed to download image: {response.status}")
-            return await response.read()
-
 def get_font(width: int, height: int) -> ImageFont.FreeTypeFont:
     """
     Get an appropriate font based on image height.
@@ -225,6 +216,30 @@ def get_font(width: int, height: int) -> ImageFont.FreeTypeFont:
             continue
 
     return ImageFont.load_default()
+
+#endregion
+
+#region Image Functions
+
+async def download_image(url: str) -> bytes:
+    """
+    Download an image from a URL.
+
+    Args:
+        url (str): The URL of the image.
+
+    Returns:
+        bytes: The image data.
+    """
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as response:
+            if response.status != 200:
+                raise ValueError(f"Failed to download image: {response.status}")
+            return await response.read()
+
+#endregion
+
+#region Meme Creation
 
 def create_meme(
         image_data: bytes,
@@ -340,14 +355,29 @@ class MakeMeme(
 
             file_extension = 'gif' if format_type == 'GIF' else 'png'
 
-            await ctx.respond(
+            response = await ctx.respond(
                 attachment=hikari.Bytes(output, f"meme.{file_extension}")
             )
+
+            message = await ctx.client.app.rest.fetch_message(ctx.channel_id, response)
+
+            bot_messages.insert_one({
+                "message_id": str(message.id),
+                "channel_id": str(ctx.channel_id),
+                "guild_id": str(ctx.guild_id),
+                "creator_id": str(ctx.user.id),
+                "type": "meme",
+                "created_at": datetime.now(timezone.utc).isoformat()
+            })
+
+            print(f"Meme created by user {ctx.user.id} in guild {ctx.guild_id}, message ID: {message.id}")
 
         except ValueError as e:
             await ctx.respond(f"An error occurred while creating the meme: {str(e)}")
         except Exception as e:
             await ctx.respond(f"An unexpected error occurred: {str(e)}")
             print(f"Error creating meme: {str(e)}")
+
+#endregion
 
 loader.command(meme)

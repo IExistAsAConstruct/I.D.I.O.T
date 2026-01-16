@@ -1,5 +1,7 @@
-import asyncio
+#region Imports
 import os
+import uuid
+import asyncio
 
 from datetime import datetime, timezone, timedelta
 from dotenv import main
@@ -10,6 +12,9 @@ from database import members
 
 import extensions
 from hooks import fail_if_not_admin_or_owner
+#endregion
+
+#region Bot Setup
 
 main.load_dotenv()
 
@@ -25,6 +30,10 @@ registry = client.di.registry_for(lightbulb.di.Contexts.DEFAULT)
 registry.register_factory(hikari.GatewayBot, lambda: bot)
 registry.register_factory(lightbulb.GatewayEnabledClient, lambda: client)
 
+#endregion
+
+#region Starting Events
+
 @bot.listen(hikari.StartingEvent)
 async def on_startup(_: hikari.StartingEvent) -> None:
     print("Bot is starting...")
@@ -36,6 +45,10 @@ async def on_startup(_: hikari.StartingEvent) -> None:
 @bot.listen(hikari.StartedEvent)
 async def on_started(_: hikari.StartedEvent) -> None:
     print("Bot has started successfully!")
+
+#endregion
+
+#region Commands - General
 
 @client.register()
 class Ping(
@@ -80,6 +93,10 @@ class Announcement(
             await ctx.respond(f"Announcement sent to {channel.mention}!", ephemeral= True)
         except Exception as e:
             await ctx.respond(f"Failed to send announcement: {str(e)}", ephemeral= True)
+
+#endregion
+
+#region Member Join and Message Events
 
 @bot.listen(hikari.MessageCreateEvent)
 async def on_message_create(event: hikari.MessageCreateEvent) -> None:
@@ -148,5 +165,31 @@ async def on_member_create(event: hikari.MemberCreateEvent) -> None:
     # Insert the new member into the database
     members.insert_one(new_member)
     print(f"New member added: {member.username} (ID: {member.id})")
+
+#endregion
+
+
+class TestModal(lightbulb.components.Modal):
+    def __init__(self) -> None:
+        self.text = self.add_short_text_input("Enter text here")
+
+    async def on_submit(self, ctx: lightbulb.components.ModalContext) -> None:
+        await ctx.respond(f"You entered: {ctx.value_for(self.text)}", ephemeral=True)
+
+@client.register()
+class TestModalCommand(
+    lightbulb.SlashCommand,
+    name="testmodal",
+    description="Test modal command"
+):
+    @lightbulb.invoke
+    async def invoke(self, ctx: lightbulb.Context, client: lightbulb.Client) -> None:
+        modal = TestModal()
+
+        await ctx.respond_with_modal("test modal", c_id := str(uuid.uuid4()), components=modal)
+        try:
+            await modal.attach(client, c_id)
+        except asyncio.TimeoutError:
+            await ctx.respond("Modal timed out.", ephemeral=True)
 
 bot.run()
